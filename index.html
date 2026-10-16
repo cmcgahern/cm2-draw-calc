@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0B1F3A"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icon-180.png"/>
+<meta name="apple-mobile-web-app-title" content="CM² Bid"/>
+<title>CM² Trinity Draw Bid Calculator</title>
+<style>
+  :root {
+    --navy: #0B1F3A;
+    --navy-2: #132a4a;
+    --gold: #C9A227;
+    --gold-soft: #e8d48a;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #142033;
+    --muted: #5b6b7c;
+    --border: #d8dee8;
+    --ok: #1a7f4b;
+    --warn: #9a6b00;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.35;
+  }
+  header {
+    background: linear-gradient(135deg, var(--navy), var(--navy-2));
+    color: #fff;
+    padding: 1.1rem 1.15rem 1.25rem;
+    border-bottom: 3px solid var(--gold);
+  }
+  header h1 {
+    margin: 0 0 .25rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+  }
+  header p {
+    margin: 0;
+    font-size: .82rem;
+    opacity: .88;
+  }
+  main {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 1rem 1rem 5.5rem;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem;
+    margin-bottom: .85rem;
+    box-shadow: 0 1px 2px rgba(11,31,58,.04);
+  }
+  .card h2 {
+    margin: 0 0 .75rem;
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--navy);
+  }
+  label {
+    display: block;
+    font-size: .78rem;
+    color: var(--muted);
+    margin: .55rem 0 .25rem;
+  }
+  input, select {
+    width: 100%;
+    padding: .7rem .75rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 1rem;
+    background: #fff;
+    color: var(--text);
+  }
+  input:focus, select:focus {
+    outline: 2px solid color-mix(in srgb, var(--gold) 55%, transparent);
+    border-color: var(--gold);
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .65rem;
+  }
+  .hint {
+    font-size: .75rem;
+    color: var(--muted);
+    margin-top: .45rem;
+  }
+  .pill {
+    display: inline-block;
+    margin-top: .55rem;
+    padding: .25rem .55rem;
+    border-radius: 999px;
+    background: #eef3fa;
+    color: var(--navy);
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  .pill.warn { background: #fff4d6; color: var(--warn); }
+  .pill.ok { background: #e6f6ed; color: var(--ok); }
+  .totals {
+    background: var(--navy);
+    color: #fff;
+    border: none;
+  }
+  .totals h2 { color: var(--gold-soft); }
+  .big {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--gold);
+    margin: .15rem 0 .35rem;
+  }
+  .subbig {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 .75rem;
+  }
+  .kv {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .35rem .75rem;
+    font-size: .9rem;
+    padding: .35rem 0;
+    border-top: 1px solid rgba(255,255,255,.12);
+  }
+  .kv span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .assumptions details {
+    font-size: .85rem;
+    color: var(--muted);
+  }
+  .assumptions summary {
+    cursor: pointer;
+    color: var(--navy);
+    font-weight: 600;
+  }
+  .assumptions .row { margin-top: .6rem; }
+  .sticky {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: rgba(11,31,58,.96);
+    color: #fff;
+    padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border-top: 2px solid var(--gold);
+    backdrop-filter: blur(8px);
+  }
+  .sticky .label { font-size: .72rem; opacity: .8; text-transform: uppercase; letter-spacing: .05em; }
+  .sticky .val { font-size: 1.35rem; font-weight: 800; color: var(--gold); }
+  .sticky .add { font-size: .85rem; opacity: .9; }
+  button.linkish {
+    margin-top: .65rem;
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: .55rem .7rem;
+    width: 100%;
+    color: var(--navy);
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>CM² Trinity Draw Bid Calculator</h1>
+  <p>From Redding 96002 · $50 fee + mileage &amp; time beyond 2 mi · 90-min cap · bundling</p>
+</header>
+<main>
+  <section class="card">
+    <h2>1. Project location</h2>
+    <label for="address">Project address (ZIP required)</label>
+    <input id="address" type="text" placeholder="123 Main St, Orland, CA 95963" autocomplete="street-address"/>
+    <label for="zipSelect">Or pick ZIP / city</label>
+    <select id="zipSelect"><option value="">Select ZIP…</option></select>
+    <div id="matchPill" class="pill warn">Enter a ZIP or choose a city</div>
+    <p class="hint">Offline city/ZIP estimate. For parcel-level accuracy, verify in Maps and use manual override.</p>
+  </section>
+
+  <section class="card">
+    <h2>2. Route</h2>
+    <div class="row">
+      <div>
+        <label>Auto one-way miles</label>
+        <input id="autoMiles" type="text" readonly/>
+      </div>
+      <div>
+        <label>Auto one-way minutes</label>
+        <input id="autoMins" type="text" readonly/>
+      </div>
+    </div>
+    <button type="button" class="linkish" id="toggleManual">Show manual route override</button>
+    <div id="manualBox" hidden>
+      <div class="row">
+        <div>
+          <label for="manMiles">Manual one-way miles</label>
+          <input id="manMiles" type="number" min="0" step="0.1" inputmode="decimal" placeholder="e.g. 67"/>
+        </div>
+        <div>
+          <label for="manMins">Manual one-way minutes</label>
+          <input id="manMins" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 60"/>
+        </div>
+      </div>
+      <p class="hint">Both fields required to override auto ZIP estimate.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. Same-day bundle</h2>
+    <label for="draws">Draws on this trip (same area, same day)</label>
+    <input id="draws" type="number" value="1" min="1" step="1" inputmode="numeric"/>
+    <p class="hint">Travel is split evenly across the draws. Totals below are per draw.</p>
+  </section>
+
+  <section class="card assumptions">
+    <details>
+      <summary>Pricing assumptions (editable)</summary>
+      <div class="row">
+        <div>
+          <label for="fee">Trinity fee ($)</label>
+          <input id="fee" type="number" value="50" min="0" step="1"/>
+        </div>
+        <div>
+          <label for="mileRate">Mileage $/mi</label>
+          <input id="mileRate" type="number" value="0.725" min="0" step="0.01"/>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="timeRate">Travel time $/hr</label>
+          <input id="timeRate" type="number" value="35" min="0" step="1"/>
+        </div>
+        <div>
+          <label for="included">Included one-way mi</label>
+          <input id="included" type="number" value="2" min="0" step="0.1"/>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="capMins">Max billed travel min (one-way)</label>
+          <input id="capMins" type="number" value="90" min="0" step="5"/>
+        </div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="buffer">Travel buffer</label>
+          <input id="buffer" type="number" value="0" min="0" max="1" step="0.01"/>
+        </div>
+        <div>
+          <label for="jobMins">Inspection + report (min)</label>
+          <input id="jobMins" type="number" value="45" min="0" step="1"/>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="card totals">
+    <h2>Bid result</h2>
+    <div class="label" style="opacity:.75;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">Total bid to submit</div>
+    <div class="big" id="totalBid">—</div>
+    <div class="subbig" id="addBid">Additional beyond $50: —</div>
+    <div class="kv"><span>Matched location</span><span id="locOut">—</span></div>
+    <div class="kv"><span>Effective one-way</span><span id="effOut">—</span></div>
+    <div class="kv"><span>Billable round-trip miles</span><span id="billMi">—</span></div>
+    <div class="kv"><span>Mileage charge</span><span id="mileCh">—</span></div>
+    <div class="kv"><span>Buffered round-trip travel</span><span id="bufMin">—</span></div>
+    <div class="kv"><span>Travel-time charge</span><span id="timeCh">—</span></div>
+    <div class="kv"><span>Total job time</span><span id="jobTime">—</span></div>
+    <div class="kv"><span>$ / total hour</span><span id="perHr">—</span></div>
+    <p id="advice" class="hint" style="color:rgba(255,255,255,.8);margin-top:.75rem"></p>
+  </section>
+</main>
+
+<div class="sticky">
+  <div>
+    <div class="label">Submit</div>
+    <div class="val" id="stickyTotal">—</div>
+  </div>
+  <div class="add" id="stickyAdd">Add’l: —</div>
+</div>
+
+<script>
+const ROUTES = [{"zip": "96001", "location": "Redding \u2014 west/central", "miles": 8.0, "minutes": 15.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96002", "location": "Redding \u2014 east/south", "miles": 5.0, "minutes": 10.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96003", "location": "Redding \u2014 north", "miles": 11.0, "minutes": 18.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96019", "location": "Shasta Lake", "miles": 16.0, "minutes": 20.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96007", "location": "Anderson", "miles": 12.0, "minutes": 16.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96022", "location": "Cottonwood", "miles": 20.0, "minutes": 24.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96073", "location": "Palo Cedro", "miles": 9.0, "minutes": 13.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96008", "location": "Bella Vista", "miles": 13.0, "minutes": 18.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96062", "location": "Millville", "miles": 16.0, "minutes": 21.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96087", "location": "Shasta", "miles": 13.0, "minutes": 20.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96047", "location": "Igo", "miles": 24.0, "minutes": 35.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96088", "location": "Shingletown", "miles": 32.0, "minutes": 42.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96069", "location": "Oak Run", "miles": 30.0, "minutes": 42.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96051", "location": "Lakehead", "miles": 35.0, "minutes": 40.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96089", "location": "Montgomery Creek", "miles": 50.0, "minutes": 62.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96013", "location": "Burney", "miles": 63.0, "minutes": 70.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96028", "location": "Fall River Mills", "miles": 73.0, "minutes": 84.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96056", "location": "McArthur", "miles": 79.0, "minutes": 90.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96065", "location": "Old Station", "miles": 57.0, "minutes": 70.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96084", "location": "Round Mountain", "miles": 38.0, "minutes": 50.0, "county": "Shasta", "notes": "Approximate city/ZIP estimate"}, {"zip": "96080", "location": "Red Bluff", "miles": 34.0, "minutes": 37.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96021", "location": "Corning", "miles": 51.0, "minutes": 52.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96055", "location": "Los Molinos", "miles": 41.0, "minutes": 43.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96035", "location": "Gerber", "miles": 43.0, "minutes": 45.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96090", "location": "Tehama", "miles": 44.0, "minutes": 47.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96092", "location": "Vina", "miles": 48.0, "minutes": 50.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96075", "location": "Paynes Creek", "miles": 43.0, "minutes": 55.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96074", "location": "Paskenta", "miles": 65.0, "minutes": 78.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96078", "location": "Proberta", "miles": 39.0, "minutes": 42.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96029", "location": "Flournoy", "miles": 56.0, "minutes": 65.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "96061", "location": "Manton", "miles": 36.0, "minutes": 50.0, "county": "Tehama", "notes": "Approximate city/ZIP estimate"}, {"zip": "95963", "location": "Orland", "miles": 67.0, "minutes": 60.0, "county": "Glenn", "notes": "Approximate city/ZIP estimate"}, {"zip": "95988", "location": "Willows", "miles": 86.0, "minutes": 82.0, "county": "Glenn", "notes": "Approximate city/ZIP estimate"}, {"zip": "95943", "location": "Glenn", "miles": 80.0, "minutes": 78.0, "county": "Glenn", "notes": "Approximate city/ZIP estimate"}, {"zip": "95951", "location": "Hamilton City", "miles": 68.0, "minutes": 68.0, "county": "Glenn", "notes": "Approximate city/ZIP estimate"}, {"zip": "95939", "location": "Elk Creek", "miles": 91.0, "minutes": 105.0, "county": "Glenn", "notes": "Approximate city/ZIP estimate"}, {"zip": "95920", "location": "Artois", "miles": 75.0, "minutes": 72.0, "county": "Glenn", "notes": "Approximate city/ZIP estimate"}, {"zip": "95926", "location": "Chico", "miles": 75.0, "minutes": 75.0, "county": "Butte", "notes": "Approximate city/ZIP estimate"}, {"zip": "95928", "location": "Chico", "miles": 78.0, "minutes": 80.0, "county": "Butte", "notes": "Approximate city/ZIP estimate"}, {"zip": "95973", "location": "Chico \u2014 north", "miles": 70.0, "minutes": 72.0, "county": "Butte", "notes": "Approximate city/ZIP estimate"}, {"zip": "95938", "location": "Durham", "miles": 85.0, "minutes": 86.0, "county": "Butte", "notes": "Approximate city/ZIP estimate"}, {"zip": "95965", "location": "Oroville", "miles": 96.0, "minutes": 100.0, "county": "Butte", "notes": "Approximate city/ZIP estimate"}, {"zip": "95966", "location": "Oroville", "miles": 98.0, "minutes": 102.0, "county": "Butte", "notes": "Approximate city/ZIP estimate"}, {"zip": "95969", "location": "Paradise", "miles": 88.0, "minutes": 95.0, "county": "Butte", "notes": "Approximate city/ZIP estimate"}, {"zip": "95954", "location": "Magalia", "miles": 92.0, "minutes": 105.0, "county": "Butte", "notes": "Approximate city/ZIP estimate"}, {"zip": "95948", "location": "Gridley", "miles": 101.0, "minutes": 102.0, "county": "Butte", "notes": "Approximate city/ZIP estimate"}, {"zip": "96093", "location": "Weaverville", "miles": 47.0, "minutes": 60.0, "county": "Trinity", "notes": "Approximate city/ZIP estimate"}, {"zip": "96041", "location": "Hayfork", "miles": 75.0, "minutes": 95.0, "county": "Trinity", "notes": "Approximate city/ZIP estimate"}, {"zip": "96052", "location": "Lewiston", "miles": 39.0, "minutes": 50.0, "county": "Trinity", "notes": "Approximate city/ZIP estimate"}, {"zip": "96048", "location": "Junction City", "miles": 57.0, "minutes": 75.0, "county": "Trinity", "notes": "Approximate city/ZIP estimate"}, {"zip": "96091", "location": "Trinity Center", "miles": 58.0, "minutes": 72.0, "county": "Trinity", "notes": "Approximate city/ZIP estimate"}, {"zip": "96024", "location": "Douglas City", "miles": 54.0, "minutes": 68.0, "county": "Trinity", "notes": "Approximate city/ZIP estimate"}, {"zip": "96010", "location": "Big Bar", "miles": 85.0, "minutes": 105.0, "county": "Trinity", "notes": "Approximate city/ZIP estimate"}, {"zip": "96046", "location": "Hyampom", "miles": 93.0, "minutes": 120.0, "county": "Trinity", "notes": "Approximate city/ZIP estimate"}, {"zip": "96067", "location": "Mount Shasta", "miles": 65.0, "minutes": 68.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96094", "location": "Weed", "miles": 72.0, "minutes": 75.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96097", "location": "Yreka", "miles": 100.0, "minutes": 102.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96025", "location": "Dunsmuir", "miles": 55.0, "minutes": 60.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96057", "location": "McCloud", "miles": 70.0, "minutes": 75.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96044", "location": "Hornbrook", "miles": 116.0, "minutes": 118.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96034", "location": "Gazelle", "miles": 88.0, "minutes": 90.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96027", "location": "Etna", "miles": 123.0, "minutes": 140.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96038", "location": "Grenada", "miles": 93.0, "minutes": 95.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96064", "location": "Montague", "miles": 106.0, "minutes": 110.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96014", "location": "Callahan", "miles": 115.0, "minutes": 135.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96023", "location": "Dorris", "miles": 126.0, "minutes": 130.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96058", "location": "Macdoel", "miles": 116.0, "minutes": 120.0, "county": "Siskiyou", "notes": "Approximate city/ZIP estimate"}, {"zip": "96130", "location": "Susanville", "miles": 112.0, "minutes": 125.0, "county": "Lassen", "notes": "Approximate city/ZIP estimate"}, {"zip": "96009", "location": "Bieber", "miles": 97.0, "minutes": 115.0, "county": "Lassen", "notes": "Approximate city/ZIP estimate"}, {"zip": "96020", "location": "Chester", "miles": 88.0, "minutes": 110.0, "county": "Plumas", "notes": "Approximate city/ZIP estimate"}];
+
+const $ = (id) => document.getElementById(id);
+const sel = $('zipSelect');
+ROUTES.sort((a,b) => a.location.localeCompare(b.location) || a.zip.localeCompare(b.zip));
+for (const r of ROUTES) {
+  const opt = document.createElement('option');
+  opt.value = r.zip;
+  opt.textContent = `${r.zip} — ${r.location} (${r.county})`;
+  sel.appendChild(opt);
+}
+
+$('toggleManual').addEventListener('click', () => {
+  const box = $('manualBox');
+  const show = box.hidden;
+  box.hidden = !show;
+  $('toggleManual').textContent = show ? 'Hide manual route override' : 'Show manual route override';
+});
+
+function extractZip(text) {
+  const m = String(text || '').trim().match(/\b(\d{5})(?:-\d{4})?\s*$/);
+  return m ? m[1] : '';
+}
+
+function findRoute(zip) {
+  return ROUTES.find(r => r.zip === zip) || null;
+}
+
+function money(n) {
+  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
+function roundUp5(n) {
+  return Math.ceil(n / 5) * 5;
+}
+
+function num(id, fallback = 0) {
+  const v = parseFloat($(id).value);
+  return Number.isFinite(v) ? v : fallback;
+}
+
+function calc() {
+  const addr = $('address').value;
+  let zip = extractZip(addr) || sel.value;
+  if (extractZip(addr) && sel.value !== extractZip(addr)) {
+    // keep select in sync when typing address
+    if ([...sel.options].some(o => o.value === zip)) sel.value = zip;
+  }
+  const route = zip ? findRoute(zip) : null;
+
+  const manM = $('manMiles').value.trim() === '' ? null : num('manMiles');
+  const manT = $('manMins').value.trim() === '' ? null : num('manMins');
+  const useManual = manM !== null && manT !== null;
+
+  let autoM = '', autoT = '';
+  if (route) {
+    autoM = route.miles;
+    autoT = route.minutes;
+  }
+  $('autoMiles').value = autoM === '' ? '' : autoM;
+  $('autoMins').value = autoT === '' ? '' : autoT;
+
+  const pill = $('matchPill');
+  if (useManual) {
+    pill.className = 'pill ok';
+    pill.textContent = 'Manual route override';
+  } else if (route) {
+    pill.className = 'pill ok';
+    pill.textContent = `Offline ZIP estimate — ${route.location}`;
+  } else if (zip) {
+    pill.className = 'pill warn';
+    pill.textContent = `ZIP ${zip} not in table — use manual override`;
+  } else {
+    pill.className = 'pill warn';
+    pill.textContent = 'Enter a ZIP or choose a city';
+  }
+
+  const oneWayMi = useManual ? manM : (route ? route.miles : null);
+  const oneWayMin = useManual ? manT : (route ? route.minutes : null);
+
+  if (oneWayMi === null || oneWayMin === null) {
+    ['totalBid','addBid','locOut','effOut','billMi','mileCh','bufMin','timeCh','jobTime','perHr','stickyTotal','stickyAdd'].forEach(id => {
+      if (id === 'addBid') $(id).textContent = 'Additional beyond $50: —';
+      else if (id === 'stickyAdd') $(id).textContent = "Add’l: —";
+      else $(id).textContent = '—';
+    });
+    $('advice').textContent = 'Enter a supported ZIP or both manual miles and minutes.';
+    return;
+  }
+
+  const fee = num('fee', 50);
+  const mileRate = num('mileRate', 0.725);
+  const timeRate = num('timeRate', 35);
+  const included = num('included', 2);
+  const buffer = num('buffer', 0);
+  const jobMins = num('jobMins', 45);
+  const capMins = num('capMins', 90);
+  const draws = Math.max(1, Math.floor(num('draws', 1)));
+
+  const capFrac = (capMins > 0 && oneWayMin > capMins) ? capMins / oneWayMin : 1;
+  const billedOneWayMi = oneWayMi;
+  const billableRT = Math.max(0, (billedOneWayMi - included) * 2);
+  const mileageCharge = billableRT * mileRate;
+  const billedOneWayMin = capMins > 0 ? Math.min(oneWayMin, capMins) : oneWayMin;
+  const bufferedRT = billedOneWayMin * 2 * (1 + buffer);
+  const travelCharge = (bufferedRT / 60) * timeRate;
+  const totalJob = (bufferedRT + jobMins * draws) / draws;
+  const calculated = fee + (mileageCharge + travelCharge) / draws;
+  const recommended = roundUp5(calculated);
+  const additional = Math.max(0, recommended - fee);
+  const perHr = totalJob > 0 ? recommended / (totalJob / 60) : 0;
+
+  $('totalBid').textContent = money(recommended);
+  $('addBid').textContent = `Additional beyond $${fee}: ${money(additional)}`;
+  $('locOut').textContent = useManual ? 'Manual override' : (route ? `${route.location} (${route.county})` : zip);
+  $('effOut').textContent = `${oneWayMi} mi · ${oneWayMin} min`;
+  $('billMi').textContent = `${billableRT.toFixed(1)} mi`;
+  $('mileCh').textContent = money(mileageCharge) +  (draws > 1 ? ` (÷${draws})` : '');
+  $('bufMin').textContent = `${Math.round(bufferedRT)} min`;
+  $('timeCh').textContent = money(travelCharge) + (draws > 1 ? ` (÷${draws})` : '') + (capFrac < 1 ? ' · capped at ' + capMins + ' min' : '');
+  $('jobTime').textContent = `${Math.round(totalJob)} min`;
+  $('perHr').textContent = money(perHr);
+  $('stickyTotal').textContent = money(recommended);
+  $('stickyAdd').textContent = `Add’l: ${money(additional)}`;
+  $('advice').textContent = (draws > 1 ? `Per draw, ${draws} draws bundled. ` : '') + `Submit ${money(recommended)} when Trinity asks for the total assignment price. Use ${money(additional)} only if they list the $${fee} fee separately.`;
+}
+
+['address','zipSelect','manMiles','manMins','fee','mileRate','timeRate','included','buffer','jobMins','capMins','draws'].forEach(id => {
+  $(id).addEventListener('input', calc);
+  $(id).addEventListener('change', calc);
+});
+
+$('zipSelect').addEventListener('change', () => {
+  // if user picks from list, keep address ZIP aligned lightly
+  const z = sel.value;
+  if (!z) return;
+  const cur = $('address').value.trim();
+  if (!cur) {
+    const r = findRoute(z);
+    $('address').value = r ? `${r.location}, CA ${z}` : z;
+  } else if (!extractZip(cur)) {
+    $('address').value = `${cur} ${z}`;
+  }
+  calc();
+});
+
+calc();
+</script>
+<script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js");</script>
+</body>
+</html>
